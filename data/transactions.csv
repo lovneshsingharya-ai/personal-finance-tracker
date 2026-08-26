@@ -1,0 +1,45 @@
+Date,Type,Category,Amount,Description
+2026-06-01,Income,Salary,15000,Part-time job salary
+2026-06-02,Expense,Food,250,Grocery shopping
+2026-06-03,Expense,Transport,80,Bus pass
+2026-06-05,Expense,Education,500,Online course subscription
+2026-06-07,Expense,Food,120,Lunch with friends
+2026-06-10,Expense,Entertainment,200,Movie and popcorn
+2026-06-12,Income,Freelance,3000,Logo design project
+2026-06-14,Expense,Shopping,800,New shoes
+2026-06-15,Expense,Bills,600,Internet bill
+2026-06-17,Expense,Food,180,Dinner
+2026-06-20,Expense,Healthcare,350,Doctor visit
+2026-06-22,Expense,Transport,50,Cab fare
+2026-06-25,Expense,Food,220,Weekly groceries
+2026-06-28,Expense,Entertainment,150,Streaming subscription
+2026-06-30,Expense,Other,100,Miscellaneous
+2026-07-01,Income,Salary,15000,Part-time job salary
+2026-07-02,Expense,Food,300,Groceries
+2026-07-04,Expense,Transport,80,Monthly bus pass
+2026-07-05,Expense,Bills,600,Internet bill
+2026-07-06,Expense,Education,200,Books
+2026-07-08,Expense,Food,150,Lunch
+2026-07-10,Income,Freelance,2000,Web development task
+2026-07-12,Expense,Shopping,1200,Clothing
+2026-07-15,Expense,Food,200,Dinner outing
+2026-07-18,Expense,Entertainment,300,Concert ticket
+2026-07-20,Expense,Healthcare,200,Pharmacy
+2026-07-22,Expense,Food,180,Weekly groceries
+2026-07-25,Expense,Transport,120,Cab fares
+2026-07-28,Expense,Other,80,Stationery
+2026-07-30,Expense,Food,220,Groceries
+2026-08-01,Income,Salary,15000,Part-time job salary
+2026-08-02,Expense,Food,280,Groceries
+2026-08-03,Expense,Transport,80,Bus pass
+2026-08-05,Expense,Bills,600,Internet + electricity bill
+2026-08-06,Expense,Education,800,Semester textbooks
+2026-08-08,Expense,Food,160,Lunch
+2026-08-10,Income,Freelance,4000,Video editing project
+2026-08-12,Expense,Shopping,500,Gym clothes
+2026-08-14,Expense,Food,210,Dinner
+2026-08-16,Expense,Entertainment,250,Games and apps
+2026-08-18,Expense,Healthcare,150,Vitamins
+2026-08-20,Expense,Food,190,Weekly groceries
+2026-08-22,Expense,Transport,90,Cab fares
+2026-08-24,Expense,Other,70,Miscellaneous
