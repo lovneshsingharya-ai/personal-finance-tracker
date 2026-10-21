@@ -23,7 +23,7 @@ from datetime import datetime, date
 
 # ── Local module imports ───────────────────────────────────────────────────────
 from modules.data_manager import (
-    load_transactions, save_transaction, delete_transaction,
+    load_transactions, save_transaction, delete_transaction, update_transaction,
     EXPENSE_CATEGORIES, INCOME_CATEGORIES, get_date_range
 )
 from modules.analytics import (
@@ -606,6 +606,11 @@ def page_add_transaction():
 
     st.markdown('<div class="section-label">Transaction Details</div>', unsafe_allow_html=True)
 
+    # ── Type selector OUTSIDE the form so category list reacts immediately ──
+    txn_type = st.selectbox("💳 Transaction Type", ["Expense", "Income"],
+                             key="add_txn_type")
+    category_options = EXPENSE_CATEGORIES if txn_type == "Expense" else INCOME_CATEGORIES
+
     with st.form("transaction_form", clear_on_submit=True):
         col1, col2 = st.columns(2)
 
@@ -615,22 +620,23 @@ def page_add_transaction():
                 value=date.today(),
                 max_value=date.today(),
             )
-            txn_type = st.selectbox("💳 Type", ["Expense", "Income"])
 
         with col2:
-            category_options = EXPENSE_CATEGORIES if txn_type == "Expense" else INCOME_CATEGORIES
             category = st.selectbox("🏷️ Category", category_options)
+
+        col3, col4 = st.columns(2)
+        with col3:
             amount = st.number_input(
                 "💰 Amount (₹)",
                 min_value=0.01, max_value=10_000_000.0,
                 step=1.0, format="%.2f",
             )
-
-        description = st.text_input(
-            "📝 Description",
-            placeholder="e.g. Monthly grocery run, Freelance project...",
-            max_chars=100,
-        )
+        with col4:
+            description = st.text_input(
+                "📝 Description (optional)",
+                placeholder="e.g. Monthly grocery run...",
+                max_chars=100,
+            )
 
         submitted = st.form_submit_button("💾 Save Transaction")
 
@@ -757,10 +763,68 @@ def page_transactions():
     with st.expander("🗑️ Delete a Transaction"):
         st.warning("Deletion is permanent. Use row number from the table above (1-indexed).")
         row_num = st.number_input("Row number to delete", min_value=1,
-                                   max_value=len(filtered), step=1)
+                                   max_value=len(filtered), step=1, key="del_row")
         if st.button("Delete Transaction", key="del_btn"):
             original_idx = filtered.index[row_num - 1]
             ok, msg = delete_transaction(original_idx)
+            if ok:
+                st.success(msg)
+                refresh()
+                st.rerun()
+            else:
+                st.error(msg)
+
+    # ── Edit ──────────────────────────────────────────────────────────────
+    with st.expander("✏️ Edit a Transaction"):
+        st.info("Select a row number from the table above (1-indexed) to edit it.")
+        edit_row = st.number_input("Row number to edit", min_value=1,
+                                   max_value=len(filtered), step=1, key="edit_row")
+
+        # Pre-populate fields with the selected row's values
+        sel = filtered.iloc[edit_row - 1]
+        sel_date = sel["Date"].date() if hasattr(sel["Date"], "date") else date.today()
+        sel_type = sel["Type"] if sel["Type"] in ["Income", "Expense"] else "Expense"
+        sel_amount = float(sel["Amount"])
+        sel_desc = str(sel["Description"]) if str(sel["Description"]) != "—" else ""
+
+        with st.form("edit_form"):
+            ec1, ec2 = st.columns(2)
+            with ec1:
+                edit_date = st.date_input("📅 Date", value=sel_date,
+                                          max_value=date.today(), key="edit_date")
+                edit_type = st.selectbox("💳 Type", ["Expense", "Income"],
+                                         index=0 if sel_type == "Expense" else 1,
+                                         key="edit_type")
+            with ec2:
+                # Show full combined list — user picks from all categories
+                all_cats = EXPENSE_CATEGORIES + [c for c in INCOME_CATEGORIES
+                                                  if c not in EXPENSE_CATEGORIES]
+                default_cat_idx = all_cats.index(sel["Category"]) \
+                    if sel["Category"] in all_cats else 0
+                edit_cat = st.selectbox("🏷️ Category", all_cats,
+                                        index=default_cat_idx, key="edit_cat")
+                edit_amount = st.number_input("💰 Amount (₹)",
+                                             min_value=0.01, max_value=10_000_000.0,
+                                             value=sel_amount, step=1.0, format="%.2f",
+                                             key="edit_amount")
+
+            edit_desc = st.text_input("📝 Description",
+                                      value=sel_desc,
+                                      placeholder="Optional description...",
+                                      max_chars=100, key="edit_desc")
+
+            save_edit = st.form_submit_button("💾 Save Changes")
+
+        if save_edit:
+            original_idx = filtered.index[edit_row - 1]
+            ok, msg = update_transaction(
+                index=original_idx,
+                date=str(edit_date),
+                txn_type=edit_type,
+                category=edit_cat,
+                amount=edit_amount,
+                description=edit_desc
+            )
             if ok:
                 st.success(msg)
                 refresh()

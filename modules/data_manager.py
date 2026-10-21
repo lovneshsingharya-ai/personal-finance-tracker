@@ -185,9 +185,9 @@ def save_transaction(date: str, txn_type: str, category: str,
     except (ValueError, TypeError):
         return False, "Amount must be a valid number."
 
-    # Check description
+    # Check description — optional, default to dash
     if not description or description.strip() == "":
-        return False, "Description cannot be empty."
+        description = "—"
 
     # ── Save to CSV ───────────────────────────────────────────────────────
     ensure_data_file()
@@ -206,6 +206,67 @@ def save_transaction(date: str, txn_type: str, category: str,
                    index=False)
 
     return True, f"✅ Transaction of ₹{amount:.2f} saved successfully!"
+
+
+def update_transaction(index: int, date: str, txn_type: str, category: str,
+                       amount: float, description: str) -> tuple[bool, str]:
+    """
+    Update an existing transaction row by its positional index.
+
+    Parameters
+    ----------
+    index       : int  — Zero-based row index in the loaded DataFrame
+    date        : str  — New date string in 'YYYY-MM-DD' format
+    txn_type    : str  — 'Income' or 'Expense'
+    category    : str  — Category label
+    amount      : float — Positive numeric amount
+    description : str  — Short text description (optional)
+
+    Returns
+    -------
+    (True, "Success message") or (False, "Error message")
+    """
+    df = load_transactions()
+
+    if index < 0 or index >= len(df):
+        return False, "Invalid transaction index."
+
+    # Validate date
+    try:
+        parsed_date = datetime.strptime(date, "%Y-%m-%d")
+        if parsed_date.date() > datetime.today().date():
+            return False, "Date cannot be in the future."
+    except ValueError:
+        return False, "Invalid date format. Please use YYYY-MM-DD."
+
+    if txn_type not in VALID_TYPES:
+        return False, f"Transaction type must be one of: {VALID_TYPES}"
+
+    if not category or category.strip() == "":
+        return False, "Category cannot be empty."
+
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            return False, "Amount must be a positive number."
+    except (ValueError, TypeError):
+        return False, "Amount must be a valid number."
+
+    if not description or description.strip() == "":
+        description = "—"
+
+    # Apply the update
+    df.at[index, "Date"] = pd.to_datetime(date)
+    df.at[index, "Type"] = txn_type
+    df.at[index, "Category"] = category.strip()
+    df.at[index, "Amount"] = round(amount, 2)
+    df.at[index, "Description"] = description.strip()
+
+    # Save back to CSV
+    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+    df.to_csv(CSV_PATH, index=False)
+
+    return True, f"✅ Transaction #{index + 1} updated successfully!"
 
 
 def delete_transaction(index: int) -> tuple[bool, str]:
