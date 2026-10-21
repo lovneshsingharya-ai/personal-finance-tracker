@@ -4,18 +4,52 @@ data_manager.py
 Handles all data loading, saving, and basic validation for transactions.
 Transactions are stored in a simple CSV file for easy inspection.
 
+Cloud deployment note:
+  Streamlit Community Cloud has a read-only filesystem.
+  We write to a writable temp directory (/tmp on Linux) when the app
+  data directory is not writable, and seed it with the bundled CSV.
+
 Author: Personal Finance Tracker Project
 """
 
 import os
+import tempfile
 import pandas as pd
 from datetime import datetime
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
-# Path to the CSV file (relative to the project root)
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-CSV_PATH = os.path.join(DATA_DIR, "transactions.csv")
+# Seed data bundled with the repo (read-only on cloud, that's fine)
+_SEED_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+_SEED_CSV = os.path.join(_SEED_DIR, "transactions.csv")
+
+# Writable data directory — prefer the bundled path, fall back to /tmp
+def _get_writable_csv_path() -> str:
+    """
+    Return a writable path for the transactions CSV.
+    On Streamlit Cloud the repo is read-only, so we use /tmp.
+    Locally the bundled data/ directory is used directly.
+    """
+    # Try the bundled data directory first
+    try:
+        os.makedirs(_SEED_DIR, exist_ok=True)
+        test_file = os.path.join(_SEED_DIR, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("ok")
+        os.remove(test_file)
+        return _SEED_CSV          # Bundled path is writable (local dev)
+    except OSError:
+        pass
+
+    # Fall back to /tmp (Streamlit Cloud, read-only filesystem)
+    tmp_dir = os.path.join(tempfile.gettempdir(), "fintrack_data")
+    os.makedirs(tmp_dir, exist_ok=True)
+    return os.path.join(tmp_dir, "transactions.csv")
+
+
+# Compute once at import time
+DATA_DIR = _SEED_DIR
+CSV_PATH = _get_writable_csv_path()
 
 # Column names used throughout the application
 COLUMNS = ["Date", "Type", "Category", "Amount", "Description"]
@@ -39,14 +73,20 @@ INCOME_CATEGORIES = [
 
 def ensure_data_file():
     """
-    Make sure the data directory and CSV file exist.
-    If the CSV does not exist, create an empty one with the correct headers.
-    Called automatically whenever data is loaded.
+    Make sure the writable CSV file exists.
+    If it doesn't, seed it from the bundled data/transactions.csv (if present),
+    otherwise create an empty file with the correct headers.
     """
-    os.makedirs(DATA_DIR, exist_ok=True)
-
     if not os.path.exists(CSV_PATH):
-        # Create an empty DataFrame and save it as the initial CSV
+        # Try to seed from the bundled CSV (works even if CSV_PATH != _SEED_CSV)
+        if CSV_PATH != _SEED_CSV and os.path.exists(_SEED_CSV):
+            try:
+                seed_df = pd.read_csv(_SEED_CSV)
+                seed_df.to_csv(CSV_PATH, index=False)
+                return
+            except Exception:
+                pass
+        # Create an empty file
         empty_df = pd.DataFrame(columns=COLUMNS)
         empty_df.to_csv(CSV_PATH, index=False)
 
