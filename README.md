@@ -170,6 +170,17 @@ http://localhost:8501
 
 ---
 
+## 🖼️ Screenshots
+
+> _Add your own screenshots here after running the application._
+
+| Dashboard | Spending Analysis |
+|---|---|
+| _(screenshot)_ | _(screenshot)_ |
+
+| Budget Tracker | Savings Prediction |
+|---|---|
+| _(screenshot)_ | _(screenshot)_ |
 
 ---
 
